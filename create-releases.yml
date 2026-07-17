@@ -1,0 +1,42 @@
+name: Create Release on Tag
+
+on:
+  push:
+    tags:
+      - 'launcher-v*'
+      - 'server-v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necesario para generar el changelog automáticamente si quieres
+
+      - name: Determinar Tipo de Componente
+        id: get_version
+        run: |
+          # Extrae el tag actual (ej. launcher-v1.0.0 o server-v1.0.0)
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$TAG_NAME" >> $GITHUB_OUTPUT
+          
+          # Separa el nombre (launcher/server) para el título
+          if [[ "$TAG_NAME" == launcher-* ]]; then
+            echo "TITLE=Launcher Update - ${TAG_NAME#launcher-}" >> $GITHUB_OUTPUT
+          else
+            echo "TITLE=Server Update - ${TAG_NAME#server-}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Crear GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: ${{ steps.get_version.outputs.TITLE }}
+          # Genera un changelog automático basado en los commits entre tags si no pones body
+          generate_release_notes: true 
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
