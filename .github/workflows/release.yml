@@ -1,0 +1,21 @@
+name: Crear Release Automática
+
+on:
+  push:
+    tags:
+      - 'launcher-v*'
+      - 'server-v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Crear la Release en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          # Esto hace que el título sea limpio y el cuerpo sea lo que escribas en el tag
+          name: ${{ contains(github.ref_name, 'launcher') && 'Launcher Update' || 'Server Update' }} - ${{ github.ref_name }}
+          generate_release_notes: true
